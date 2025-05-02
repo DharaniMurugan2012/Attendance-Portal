@@ -159,8 +159,14 @@ const AdminDashboard: React.FC = () => {
     
     // Filter by date if on "daily" tab
     if (activeTab === 'daily' && date) {
-      const dateStr = date.toISOString().split('T')[0];
-      filtered = filtered.filter(record => record.date === dateStr);
+      // Format the selected date to YYYY-MM-DD format for comparison
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      const formattedDateStr = `${year}-${month}-${day}`;
+      
+      filtered = filtered.filter(record => record.date === formattedDateStr);
+      setSelectedDateStr(formattedDateStr);
     }
     
     // Filter by search query (if any)
@@ -173,10 +179,6 @@ const AdminDashboard: React.FC = () => {
     }
     
     setFilteredRecords(filtered);
-    
-    if (date) {
-      setSelectedDateStr(date.toISOString().split('T')[0]);
-    }
   }, [date, allAttendanceRecords, activeTab, searchQuery]);
   
   const handleDateChange = (newDate: Date | undefined) => {
