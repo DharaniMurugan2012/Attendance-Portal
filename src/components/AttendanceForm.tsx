@@ -1,11 +1,10 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { toast } from 'sonner';
 import { useAuth } from '@/context/AuthContext';
 import { getCurrentDate, getCurrentTime } from '@/utils/dateUtils';
-import { Clock, ClockCheck } from 'lucide-react';
+import { Clock, CheckCheck } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Form, FormControl, FormField, FormItem, FormLabel } from '@/components/ui/form';
 import { useForm } from 'react-hook-form';
@@ -180,7 +179,7 @@ const AttendanceForm: React.FC<AttendanceFormProps> = ({
                   onClick={handleClockIn} 
                   className="bg-attendance-primary hover:bg-attendance-primary/90"
                 >
-                  <ClockCheck className="mr-2 h-4 w-4" /> Clock In
+                  <CheckCheck className="mr-2 h-4 w-4" /> Clock In
                 </Button>
                 <Button 
                   onClick={() => setIsManualMode(true)} 
