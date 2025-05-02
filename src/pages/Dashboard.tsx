@@ -158,64 +158,8 @@ const Dashboard: React.FC = () => {
     }
   };
   
-  const handleClockIn = (inTime: string) => {
-    const today = getCurrentDate();
-    
-    // Update or create today's record
-    const newRecord: AttendanceRecord = {
-      id: `rec-${state.user?.id}-${today}`,
-      userId: state.user?.id || '',
-      userName: state.user?.name || '',
-      userEmail: state.user?.email || '',
-      date: today,
-      inTime,
-      outTime: null,
-      status: 'in-progress'
-    };
-    
-    setTodayRecord(newRecord);
-    setAttendanceStatus('in_progress');
-    
-    // Update attendance records
-    setAttendanceRecords(prev => {
-      const existingIdx = prev.findIndex(r => r.date === today);
-      if (existingIdx >= 0) {
-        const updated = [...prev];
-        updated[existingIdx] = newRecord;
-        return updated;
-      } else {
-        return [newRecord, ...prev];
-      }
-    });
-  };
-  
-  const handleClockOut = (outTime: string) => {
-    if (!todayRecord) return;
-    
-    const updatedRecord = {
-      ...todayRecord,
-      outTime,
-      status: 'present' as const
-    };
-    
-    setTodayRecord(updatedRecord);
-    setAttendanceStatus('completed');
-    
-    // Update attendance records
-    setAttendanceRecords(prev => {
-      const today = getCurrentDate();
-      const existingIdx = prev.findIndex(r => r.date === today);
-      if (existingIdx >= 0) {
-        const updated = [...prev];
-        updated[existingIdx] = updatedRecord;
-        return updated;
-      }
-      return prev;
-    });
-  };
-
   const handleManualSubmit = (date: string, inTime: string, outTime: string, status: 'present' | 'absent' | 'half-day') => {
-    // Create a completed record with both in and out times
+    // Create a record with the provided details
     const newRecord: AttendanceRecord = {
       id: `rec-${state.user?.id}-${date}`,
       userId: state.user?.id || '',
@@ -260,8 +204,6 @@ const Dashboard: React.FC = () => {
           {/* Left Column - Attendance Form */}
           <div className="md:col-span-1">
             <AttendanceForm 
-              onClockIn={handleClockIn}
-              onClockOut={handleClockOut}
               onManualSubmit={handleManualSubmit}
               attendanceStatus={attendanceStatus}
               lastInTime={todayRecord?.inTime || null}
