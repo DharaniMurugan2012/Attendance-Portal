@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -8,11 +9,13 @@ import { Clock, CheckCheck } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Form, FormControl, FormField, FormItem, FormLabel } from '@/components/ui/form';
 import { useForm } from 'react-hook-form';
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface AttendanceFormProps {
   onClockIn: (inTime: string) => void;
   onClockOut: (outTime: string) => void;
-  onManualSubmit: (inTime: string, outTime: string) => void;
+  onManualSubmit: (date: string, inTime: string, outTime: string, status: 'present' | 'absent' | 'half-day') => void;
   attendanceStatus: 'not_started' | 'in_progress' | 'completed';
   lastInTime: string | null;
 }
@@ -31,8 +34,10 @@ const AttendanceForm: React.FC<AttendanceFormProps> = ({
   
   const form = useForm({
     defaultValues: {
+      date: currentDate,
       inTime: lastInTime?.substring(0, 5) || '',
-      outTime: ''
+      outTime: '',
+      status: 'present' as 'present' | 'absent' | 'half-day'
     }
   });
   
@@ -57,8 +62,8 @@ const AttendanceForm: React.FC<AttendanceFormProps> = ({
     toast.success('You have clocked out successfully!');
   };
   
-  const handleManualSubmit = (data: { inTime: string; outTime: string }) => {
-    onManualSubmit(`${data.inTime}:00`, `${data.outTime}:00`);
+  const handleManualSubmit = (data: { date: string; inTime: string; outTime: string; status: 'present' | 'absent' | 'half-day' }) => {
+    onManualSubmit(data.date, `${data.inTime}:00`, `${data.outTime}:00`, data.status);
     setIsManualMode(false);
     toast.success('Attendance recorded successfully!');
   };
@@ -78,6 +83,22 @@ const AttendanceForm: React.FC<AttendanceFormProps> = ({
         {isManualMode ? (
           <Form {...form}>
             <form onSubmit={form.handleSubmit(handleManualSubmit)} className="space-y-4">
+              <FormField
+                control={form.control}
+                name="date"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Date</FormLabel>
+                    <FormControl>
+                      <Input 
+                        type="date" 
+                        {...field}
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+            
               <FormField
                 control={form.control}
                 name="inTime"
@@ -107,6 +128,42 @@ const AttendanceForm: React.FC<AttendanceFormProps> = ({
                         placeholder="17:00" 
                         {...field}
                       />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
+                name="status"
+                render={({ field }) => (
+                  <FormItem className="space-y-3">
+                    <FormLabel>Attendance Status</FormLabel>
+                    <FormControl>
+                      <RadioGroup
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                        className="flex flex-col space-y-1"
+                      >
+                        <FormItem className="flex items-center space-x-3 space-y-0">
+                          <FormControl>
+                            <RadioGroupItem value="present" />
+                          </FormControl>
+                          <FormLabel className="font-normal">Present</FormLabel>
+                        </FormItem>
+                        <FormItem className="flex items-center space-x-3 space-y-0">
+                          <FormControl>
+                            <RadioGroupItem value="half-day" />
+                          </FormControl>
+                          <FormLabel className="font-normal">Half-day</FormLabel>
+                        </FormItem>
+                        <FormItem className="flex items-center space-x-3 space-y-0">
+                          <FormControl>
+                            <RadioGroupItem value="absent" />
+                          </FormControl>
+                          <FormLabel className="font-normal">Absent</FormLabel>
+                        </FormItem>
+                      </RadioGroup>
                     </FormControl>
                   </FormItem>
                 )}

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Header from '@/components/Header';
@@ -215,33 +214,37 @@ const Dashboard: React.FC = () => {
     });
   };
 
-  const handleManualSubmit = (inTime: string, outTime: string) => {
-    const today = getCurrentDate();
-    
+  const handleManualSubmit = (date: string, inTime: string, outTime: string, status: 'present' | 'absent' | 'half-day') => {
     // Create a completed record with both in and out times
     const newRecord: AttendanceRecord = {
-      id: `rec-${state.user?.id}-${today}`,
+      id: `rec-${state.user?.id}-${date}`,
       userId: state.user?.id || '',
       userName: state.user?.name || '',
       userEmail: state.user?.email || '',
-      date: today,
-      inTime,
-      outTime,
-      status: 'present'
+      date,
+      inTime: status === 'absent' ? '' : inTime,
+      outTime: status === 'absent' ? null : outTime,
+      status
     };
     
-    setTodayRecord(newRecord);
-    setAttendanceStatus('completed');
+    // If the date is today, update today's record
+    const today = getCurrentDate();
+    if (date === today) {
+      setTodayRecord(newRecord);
+      setAttendanceStatus('completed');
+    }
     
     // Update attendance records
     setAttendanceRecords(prev => {
-      const existingIdx = prev.findIndex(r => r.date === today);
+      const existingIdx = prev.findIndex(r => r.date === date);
       if (existingIdx >= 0) {
         const updated = [...prev];
         updated[existingIdx] = newRecord;
         return updated;
       } else {
-        return [newRecord, ...prev];
+        return [newRecord, ...prev].sort((a, b) => 
+          new Date(b.date).getTime() - new Date(a.date).getTime()
+        );
       }
     });
   };
