@@ -214,6 +214,37 @@ const Dashboard: React.FC = () => {
       return prev;
     });
   };
+
+  const handleManualSubmit = (inTime: string, outTime: string) => {
+    const today = getCurrentDate();
+    
+    // Create a completed record with both in and out times
+    const newRecord: AttendanceRecord = {
+      id: `rec-${state.user?.id}-${today}`,
+      userId: state.user?.id || '',
+      userName: state.user?.name || '',
+      userEmail: state.user?.email || '',
+      date: today,
+      inTime,
+      outTime,
+      status: 'present'
+    };
+    
+    setTodayRecord(newRecord);
+    setAttendanceStatus('completed');
+    
+    // Update attendance records
+    setAttendanceRecords(prev => {
+      const existingIdx = prev.findIndex(r => r.date === today);
+      if (existingIdx >= 0) {
+        const updated = [...prev];
+        updated[existingIdx] = newRecord;
+        return updated;
+      } else {
+        return [newRecord, ...prev];
+      }
+    });
+  };
   
   return (
     <div className="min-h-screen bg-gray-50">
@@ -228,6 +259,7 @@ const Dashboard: React.FC = () => {
             <AttendanceForm 
               onClockIn={handleClockIn}
               onClockOut={handleClockOut}
+              onManualSubmit={handleManualSubmit}
               attendanceStatus={attendanceStatus}
               lastInTime={todayRecord?.inTime || null}
             />
@@ -250,7 +282,7 @@ const Dashboard: React.FC = () => {
                         mode="single"
                         selected={date}
                         onSelect={handleDateChange}
-                        className="border rounded-md p-3"
+                        className="border rounded-md p-3 pointer-events-auto"
                       />
                     </div>
                     <div className="flex-grow">

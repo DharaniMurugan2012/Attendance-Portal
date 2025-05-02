@@ -5,11 +5,15 @@ import { Button } from "@/components/ui/button";
 import { toast } from 'sonner';
 import { useAuth } from '@/context/AuthContext';
 import { getCurrentDate, getCurrentTime } from '@/utils/dateUtils';
-import { Clock } from 'lucide-react';
+import { Clock, ClockCheck } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Form, FormControl, FormField, FormItem, FormLabel } from '@/components/ui/form';
+import { useForm } from 'react-hook-form';
 
 interface AttendanceFormProps {
   onClockIn: (inTime: string) => void;
   onClockOut: (outTime: string) => void;
+  onManualSubmit: (inTime: string, outTime: string) => void;
   attendanceStatus: 'not_started' | 'in_progress' | 'completed';
   lastInTime: string | null;
 }
@@ -17,12 +21,21 @@ interface AttendanceFormProps {
 const AttendanceForm: React.FC<AttendanceFormProps> = ({
   onClockIn,
   onClockOut,
+  onManualSubmit,
   attendanceStatus,
   lastInTime
 }) => {
   const { state } = useAuth();
   const [currentTime, setCurrentTime] = useState(getCurrentTime());
   const currentDate = getCurrentDate();
+  const [isManualMode, setIsManualMode] = useState(false);
+  
+  const form = useForm({
+    defaultValues: {
+      inTime: lastInTime?.substring(0, 5) || '',
+      outTime: ''
+    }
+  });
   
   // Update time every second
   useEffect(() => {
@@ -45,6 +58,12 @@ const AttendanceForm: React.FC<AttendanceFormProps> = ({
     toast.success('You have clocked out successfully!');
   };
   
+  const handleManualSubmit = (data: { inTime: string; outTime: string }) => {
+    onManualSubmit(`${data.inTime}:00`, `${data.outTime}:00`);
+    setIsManualMode(false);
+    toast.success('Attendance recorded successfully!');
+  };
+  
   return (
     <Card className="w-full">
       <CardHeader className="pb-4">
@@ -57,67 +76,133 @@ const AttendanceForm: React.FC<AttendanceFormProps> = ({
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="flex justify-center mb-6">
-          <div className="relative">
-            <div className="w-36 h-36 rounded-full border-4 border-attendance-primary flex items-center justify-center">
-              <div className="text-center">
-                <p className="text-sm text-gray-500">Current Time</p>
-                <p className="text-3xl font-bold text-attendance-dark">
-                  {currentTime.substring(0, 5)}
-                </p>
+        {isManualMode ? (
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(handleManualSubmit)} className="space-y-4">
+              <FormField
+                control={form.control}
+                name="inTime"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Clock In Time (HH:MM)</FormLabel>
+                    <FormControl>
+                      <Input 
+                        type="time" 
+                        placeholder="09:00" 
+                        {...field}
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
+                name="outTime"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Clock Out Time (HH:MM)</FormLabel>
+                    <FormControl>
+                      <Input 
+                        type="time" 
+                        placeholder="17:00" 
+                        {...field}
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+              
+              <div className="flex gap-2 justify-end">
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  onClick={() => setIsManualMode(false)}
+                >
+                  Cancel
+                </Button>
+                <Button type="submit">Submit</Button>
+              </div>
+            </form>
+          </Form>
+        ) : (
+          <>
+            <div className="flex justify-center mb-6">
+              <div className="relative">
+                <div className="w-36 h-36 rounded-full border-4 border-attendance-primary flex items-center justify-center">
+                  <div className="text-center">
+                    <p className="text-sm text-gray-500">Current Time</p>
+                    <p className="text-3xl font-bold text-attendance-dark">
+                      {currentTime.substring(0, 5)}
+                    </p>
+                  </div>
+                </div>
+                {attendanceStatus === 'in_progress' && (
+                  <div className="absolute inset-0 rounded-full border-4 border-attendance-secondary animate-pulse-ring"></div>
+                )}
               </div>
             </div>
-            {attendanceStatus === 'in_progress' && (
-              <div className="absolute inset-0 rounded-full border-4 border-attendance-secondary animate-pulse-ring"></div>
-            )}
-          </div>
-        </div>
-        
-        <div className="space-y-2 mb-4">
-          <div className="flex justify-between text-sm">
-            <span className="text-gray-600">Status:</span>
-            <span className={`font-medium ${
-              attendanceStatus === 'completed' 
-                ? 'text-attendance-secondary' 
-                : attendanceStatus === 'in_progress' 
-                  ? 'text-attendance-accent'
-                  : 'text-gray-700'
-            }`}>
-              {attendanceStatus === 'not_started' 
-                ? 'Not Started' 
-                : attendanceStatus === 'in_progress' 
-                  ? 'In Progress'
-                  : 'Completed'}
-            </span>
-          </div>
-          
-          {lastInTime && (
-            <div className="flex justify-between text-sm">
-              <span className="text-gray-600">Clock In Time:</span>
-              <span className="font-medium">{lastInTime.substring(0, 5)}</span>
+            
+            <div className="space-y-2 mb-4">
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-600">Status:</span>
+                <span className={`font-medium ${
+                  attendanceStatus === 'completed' 
+                    ? 'text-attendance-secondary' 
+                    : attendanceStatus === 'in_progress' 
+                      ? 'text-attendance-accent'
+                      : 'text-gray-700'
+                }`}>
+                  {attendanceStatus === 'not_started' 
+                    ? 'Not Started' 
+                    : attendanceStatus === 'in_progress' 
+                      ? 'In Progress'
+                      : 'Completed'}
+                </span>
+              </div>
+              
+              {lastInTime && (
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-600">Clock In Time:</span>
+                  <span className="font-medium">{lastInTime.substring(0, 5)}</span>
+                </div>
+              )}
             </div>
-          )}
-        </div>
+          </>
+        )}
       </CardContent>
       <CardFooter className="flex justify-center pt-0">
-        {attendanceStatus === 'not_started' ? (
-          <Button 
-            onClick={handleClockIn} 
-            className="bg-attendance-primary hover:bg-attendance-primary/90"
-          >
-            Clock In
-          </Button>
-        ) : attendanceStatus === 'in_progress' ? (
-          <Button 
-            onClick={handleClockOut} 
-            className="bg-attendance-secondary hover:bg-attendance-secondary/90"
-          >
-            Clock Out
-          </Button>
-        ) : (
-          <p className="text-sm text-gray-600">
-            You have completed your attendance for today
-          </p>
+        {!isManualMode && (
+          <>
+            {attendanceStatus === 'not_started' ? (
+              <div className="flex flex-col gap-2 w-full">
+                <Button 
+                  onClick={handleClockIn} 
+                  className="bg-attendance-primary hover:bg-attendance-primary/90"
+                >
+                  <ClockCheck className="mr-2 h-4 w-4" /> Clock In
+                </Button>
+                <Button 
+                  onClick={() => setIsManualMode(true)} 
+                  variant="outline"
+                  className="text-sm"
+                >
+                  Enter Attendance Manually
+                </Button>
+              </div>
+            ) : attendanceStatus === 'in_progress' ? (
+              <Button 
+                onClick={handleClockOut} 
+                className="bg-attendance-secondary hover:bg-attendance-secondary/90"
+              >
+                Clock Out
+              </Button>
+            ) : (
+              <p className="text-sm text-gray-600">
+                You have completed your attendance for today
+              </p>
+            )}
+          </>
         )}
       </CardFooter>
     </Card>
